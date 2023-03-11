@@ -11,14 +11,14 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: build docker image
-        run: docker build --platform linux/amd64 -f build/package/docker/Dockerfile -t koldstart:latest .
+        run: docker build --platform linux/amd64 -f build/package/docker/Dockerfile -t kibernate:latest .
       - name: save docker image
-        run: docker save koldstart:latest | gzip > koldstart-docker-image.tgz
+        run: docker save kibernate:latest | gzip > kibernate-docker-image.tgz
       - name: upload saved image as atifact
         uses: actions/upload-artifact@v3
         with:
-          name: koldstart-docker-image
-          path: koldstart-docker-image.tgz
+          name: kibernate-docker-image
+          path: kibernate-docker-image.tgz
   test:
     runs-on: ubuntu-latest
     name: Test
@@ -29,7 +29,7 @@ jobs:
       - name: download saved image
         uses: actions/download-artifact@v3
         with:
-          name: koldstart-docker-image
+          name: kibernate-docker-image
       - name: install helm
         run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
       - name: install minikube
@@ -37,22 +37,22 @@ jobs:
       - name: start minikube
         run: minikube start --driver=docker --kubernetes-version=v1.24.10
       - name: load docker image
-        run: eval $(minikube docker-env); gunzip -c koldstart-docker-image.tgz | docker load
+        run: eval $(minikube docker-env); gunzip -c kibernate-docker-image.tgz | docker load
       - name: create test target deployment
         run: kubectl create deployment testtarget --image=ghcr.io/nginxinc/nginx-unprivileged:1.23-alpine --replicas=1 --port=8080
       - name: create test target service
         run: kubectl expose deployment testtarget --port=8080 --target-port=8080
-      - name: helm install koldstart
+      - name: helm install kibernate
         run: |
           helm install \
             -n default \
-            koldstart \
-            ./deployments/helm/koldstart \
+            kibernate \
+            ./deployments/helm/kibernate \
             --set image.tag=latest \
             --set image.pullPolicy=Never \
             --set service.type=NodePort \
             --set "args[0]=-targetUrl=http://testtarget:8080"
-      - name: wait for koldstart to be ready
-        run: kubectl wait --for=condition=available --timeout=60s deployment/koldstart
-      - name: test koldstart
-        run: set -euo pipefail; curl -sSf $(minikube service koldstart --url) | grep "If you see this page, the nginx web server is successfully installed"
+      - name: wait for kibernate to be ready
+        run: kubectl wait --for=condition=available --timeout=60s deployment/kibernate
+      - name: test kibernate
+        run: set -euo pipefail; curl -sSf $(minikube service kibernate --url) | grep "If you see this page, the nginx web server is successfully installed"

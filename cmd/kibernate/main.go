@@ -14,31 +14,26 @@
    limitations under the License.
 */
 
-package koldstart
+package main
 
 import (
-	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"flag"
+	"github.com/kibernate/kibernate/internal/app/kibernate"
 )
 
-func NewKoldstart(config Config) *Koldstart {
-	return &Koldstart{config}
-}
-
-type Koldstart struct {
-	Config Config
-}
-
-func (k *Koldstart) Run() error {
-	targetUrl, err := url.Parse(k.Config.TargetUrl)
-	if err != nil {
-		return err
+func main() {
+	targetUrl := flag.String("targetUrl", "", "The target url of the proxy.")
+	flag.Parse()
+	// panic if mandatory flag "targetUrl" is not set:
+	if *targetUrl == "" {
+		panic("targetUrl flag is mandatory")
 	}
-	proxy := httputil.NewSingleHostReverseProxy(targetUrl)
-	err = http.ListenAndServe(":8080", proxy)
-	if err != nil {
-		return err
+	kibernateConfig := kibernate.Config{
+		TargetUrl: *targetUrl,
 	}
-	return nil
+	kibernateInstance := kibernate.NewKibernate(kibernateConfig)
+	err := kibernateInstance.Run()
+	if err != nil {
+		panic(err)
+	}
 }

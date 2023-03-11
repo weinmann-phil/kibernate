@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package koldstart
+package kibernate
 
 type Config struct {
 	TargetUrl string
