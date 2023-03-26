@@ -21,6 +21,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Docker Build
-        script: make docker-build
+        run: make docker-build
       - name: Docker Push
-        script: make docker-push-ghcr IMAGE_TAGS="latest ${GITHUB_REF#refs/tags/v}"
+        run: make docker-push-ghcr IMAGE_TAGS="latest ${GITHUB_REF#refs/tags/v}"
