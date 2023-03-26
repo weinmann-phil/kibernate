@@ -2,13 +2,13 @@ test:
 	./scripts/run-all-tests.sh
 
 docker-build:
-	./scripts/docker-build.sh linux/amd64,linux/arm64
+	./scripts/docker-build.sh
 
-docker-push-ghcr:
+docker-buildx-push-ghcr:
 ifndef IMAGE_TAGS
 	$(error IMAGE_TAGS is undefined)
 endif
-	./scripts/docker-push-ghcr.sh $(IMAGE_TAGS)
+	./scripts/docker-buildx-push-ghcr.sh $(IMAGE_TAGS)
 
 helm-package:
 	./scripts/helm-package.sh
