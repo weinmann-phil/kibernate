@@ -5,7 +5,8 @@ on:
     types:
       - completed
 jobs:
-  - name: Helm Package and Publish to GHCR
+  helm-package-publish:
+    name: Helm Package and Publish to GHCR
     runs-on: ubuntu-latest
     steps:
       - name: checkout
