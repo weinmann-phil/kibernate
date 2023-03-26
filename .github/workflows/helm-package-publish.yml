@@ -36,7 +36,7 @@ jobs:
         with:
           name: helm-package
       - name: move artifact into place and generate index
-        run: mkdir -p ./helm-charts; mv -f deployments/helm/kibernate-*.tgz helm-charts/ && helm repo index ./helm-charts; rm -fr deployments
+        run: mkdir -p ./helm-charts; mv -f kibernate-*.tgz helm-charts/ && helm repo index ./helm-charts
       - name: set git user config
         run: git config --global user.email "workflow@github-actions.local" && git config --global user.name "GitHub Actions Workflow"
       - name: commit and push
