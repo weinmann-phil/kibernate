@@ -3,6 +3,7 @@
 FROM golang:1.19-alpine as builder
 WORKDIR /app
 COPY . ./
+RUN go get -d -v ./...
 RUN GOOS=linux go build -ldflags="-w -s" -o kibernate ./cmd/kibernate
 RUN chmod +x kibernate
 

@@ -1,27 +1,17 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -eo pipefail
 
 cd "$(dirname "$0")"/..
-
-minikube start --driver=docker --kubernetes-version=v1.24.10 -p kibernate-test
-minikube profile kibernate-test
+./scripts/prepare-testing-env.sh
 function finally() {
-  minikube delete
+  ./scripts/tear-down-testing-env.sh
 }
 trap finally EXIT
-eval "$(minikube docker-env)"
-docker build --platform linux/amd64 -f build/package/docker/Dockerfile -t kibernate:latest .
+./scripts/build-docker-image.sh
 kubectl create deployment testtarget --image=ghcr.io/nginxinc/nginx-unprivileged:1.23-alpine --replicas=1 --port=8080
 kubectl expose deployment testtarget --port=8080 --target-port=8080
-helm install \
-  -n default \
-  kibernate \
-  ./deployments/helm/kibernate \
-  --set image.tag=latest \
-  --set image.pullPolicy=Never \
-  --set service.type=NodePort \
-  --set "args[0]=-targetUrl=http://testtarget:8080"
+./scripts/install-helm-chart.sh
 kubectl wait --for=condition=available --timeout=60s deployment/testtarget
 kubectl wait --for=condition=available --timeout=60s deployment/kibernate
-kubectl run -i --rm test --image=alpine:3 --restart=Never -- /bin/sh -c "set -euo pipefail; apk add curl; curl -sSf 'http://kibernate:8080' | grep 'If you see this page, the nginx web server is successfully installed'"
+kubectl run -i --rm test --image=alpine:3 --restart=Never -- /bin/sh -c "set -eo pipefail; apk add curl; curl -s 'http://kibernate:8080' | grep 'Thank you for using nginx.'"

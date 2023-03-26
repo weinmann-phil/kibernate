@@ -26,6 +26,7 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default (include "kibernate.fullname" .) | quote }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:

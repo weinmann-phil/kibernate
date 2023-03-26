@@ -18,27 +18,24 @@ package kibernate
 
 import (
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 )
 
-func NewKibernate(config Config) *Kibernate {
-	return &Kibernate{config}
+type WaitTypeConnectHandler struct {
+	Config     Config
+	Proxy      *Proxy
+	Deployment *DeploymentHandler
 }
 
-type Kibernate struct {
-	Config Config
+func NewWaitTypeConnectHandler(config Config, proxy *Proxy, deployment *DeploymentHandler) *WaitTypeConnectHandler {
+	return &WaitTypeConnectHandler{
+		Config:     config,
+		Proxy:      proxy,
+		Deployment: deployment,
+	}
 }
 
-func (k *Kibernate) Run() error {
-	targetUrl, err := url.Parse(k.Config.TargetUrl)
-	if err != nil {
-		return err
-	}
-	proxy := httputil.NewSingleHostReverseProxy(targetUrl)
-	err = http.ListenAndServe(":8080", proxy)
-	if err != nil {
-		return err
-	}
+func (w *WaitTypeConnectHandler) Handle(writer http.ResponseWriter, request *http.Request) error {
+	w.Deployment.WaitForReady()
+	w.Proxy.PatchThrough(writer, request)
 	return nil
 }

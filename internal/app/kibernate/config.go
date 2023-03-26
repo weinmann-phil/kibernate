@@ -16,6 +16,31 @@
 
 package kibernate
 
+import "regexp"
+
+type WaitType string
+
+const (
+	WaitTypeConnect WaitType = "connect"
+	WaitTypeLoading          = "loading"
+	WaitTypeNone             = "none"
+)
+
 type Config struct {
-	TargetUrl string
+	Namespace              string
+	Service                string
+	Deployment             string
+	ListenPort             uint16
+	ServicePort            uint16
+	IdleTimeoutSecs        uint16
+	CustomHostValue        string
+	DefaultWaitType        WaitType
+	ActivityPathMatch      *regexp.Regexp
+	ActivityPathExclude    *regexp.Regexp
+	WaitNonePathMatch      *regexp.Regexp
+	WaitNonePathExclude    *regexp.Regexp
+	WaitConnectPathMatch   *regexp.Regexp
+	WaitConnectPathExclude *regexp.Regexp
+	WaitLoadingPathMatch   *regexp.Regexp
+	WaitLoadingPathExclude *regexp.Regexp
 }

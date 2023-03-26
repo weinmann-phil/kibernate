@@ -19,21 +19,69 @@ package main
 import (
 	"flag"
 	"github.com/kibernate/kibernate/internal/app/kibernate"
+	"regexp"
 )
 
 func main() {
-	targetUrl := flag.String("targetUrl", "", "The target url of the proxy.")
+	namespace := flag.String("namespace", "default", "The namespace of the service and deployment [default: default]")
+	service := flag.String("service", "", "The name of the service to be proxied")
+	deployment := flag.String("deployment", "", "The name of the deployment to be activated/deactivated")
+	servicePort := flag.Uint("servicePort", 8080, "The port of the service to be proxied [default: 8080]")
+	idleTimeoutSecs := flag.Uint("idleTimeoutSecs", 600, "The number of seconds to wait for activity before deactivating the deployment [default: 600]")
+	customHostValue := flag.String("customHostValue", "", "The value to use for the HTTP Host header")
+	defaultWaitType := flag.String("defaultWaitType", "connect", "The type of wait to perform by default - connect, loading, none [default: connect]")
+	activityPathMatch := flag.String("activityPathMatch", ".*", "A regular expression to match paths that should be considered activity [default: \".*\"]")
+	activityPathExclude := flag.String("activityPathExclude", "", "A regular expression to exclude paths that should not be considered activity")
+	waitNonePathMatch := flag.String("waitNonePathMatch", "", "A regular expression to match paths that should not wait for deployment readiness")
+	waitNonePathExclude := flag.String("waitNonePathExclude", "", "A regular expression to exclude paths that should not wait for deployment readiness")
+	waitConnectPathMatch := flag.String("waitConnectPathMatch", "", "A regular expression to match paths that should wait for deployment readiness")
+	waitConnectPathExclude := flag.String("waitConnectPathExclude", "", "A regular expression to exclude paths that should not wait for deployment readiness")
+	waitLoadingPathMatch := flag.String("waitLoadingPathMatch", "", "A regular expression to match paths that should deliver a loading page while waiting for the deployment to be ready")
+	waitLoadingPathExclude := flag.String("waitLoadingPathExclude", "", "A regular expression to exclude paths that should not deliver a loading page while waiting for the deployment to be ready")
 	flag.Parse()
-	// panic if mandatory flag "targetUrl" is not set:
-	if *targetUrl == "" {
-		panic("targetUrl flag is mandatory")
+	if *service == "" || *deployment == "" {
+		panic("service and deployment must be set")
+	}
+	if *defaultWaitType != "connect" && *defaultWaitType != "loading" && *defaultWaitType != "none" {
+		panic("defaultWaitType must be connect, loading, or none")
 	}
 	kibernateConfig := kibernate.Config{
-		TargetUrl: *targetUrl,
+		Namespace:       *namespace,
+		Service:         *service,
+		Deployment:      *deployment,
+		ServicePort:     uint16(*servicePort),
+		IdleTimeoutSecs: uint16(*idleTimeoutSecs),
+		CustomHostValue: *customHostValue,
+		DefaultWaitType: kibernate.WaitType(*defaultWaitType),
+		ListenPort:      8080,
+	}
+	if *activityPathMatch != "" {
+		kibernateConfig.ActivityPathMatch = regexp.MustCompile(*activityPathMatch)
+	}
+	if *activityPathExclude != "" {
+		kibernateConfig.ActivityPathExclude = regexp.MustCompile(*activityPathExclude)
+	}
+	if *waitNonePathMatch != "" {
+		kibernateConfig.WaitNonePathMatch = regexp.MustCompile(*waitNonePathMatch)
+	}
+	if *waitNonePathExclude != "" {
+		kibernateConfig.WaitNonePathExclude = regexp.MustCompile(*waitNonePathExclude)
+	}
+	if *waitConnectPathMatch != "" {
+		kibernateConfig.WaitConnectPathMatch = regexp.MustCompile(*waitConnectPathMatch)
+	}
+	if *waitConnectPathExclude != "" {
+		kibernateConfig.WaitConnectPathExclude = regexp.MustCompile(*waitConnectPathExclude)
+	}
+	if *waitLoadingPathMatch != "" {
+		kibernateConfig.WaitLoadingPathMatch = regexp.MustCompile(*waitLoadingPathMatch)
+	}
+	if *waitLoadingPathExclude != "" {
+		kibernateConfig.WaitLoadingPathExclude = regexp.MustCompile(*waitLoadingPathExclude)
 	}
 	kibernateInstance := kibernate.NewKibernate(kibernateConfig)
 	err := kibernateInstance.Run()
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
