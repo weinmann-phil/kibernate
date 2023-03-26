@@ -21,7 +21,5 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Docker Build
-        run: make docker-build
-      - name: Docker Push
+      - name: build and push image
         run: make docker-buildx-push-ghcr IMAGE_TAGS="latest ${GITHUB_REF#refs/tags/v}"
