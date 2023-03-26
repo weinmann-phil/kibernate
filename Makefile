@@ -12,6 +12,3 @@ endif
 
 helm-package:
 	./scripts/helm-package.sh
-
-helm-push-ghcr:
-	./scripts/helm-push-ghcr.sh
