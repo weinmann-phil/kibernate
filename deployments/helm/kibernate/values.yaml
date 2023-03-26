@@ -2,6 +2,23 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+kibernate:
+  namespace: default
+  service: testtarget
+  deployment: testtarget
+  servicePort: 8080
+  idleTimeoutSecs: 60
+  customHostValue: ""
+  defaultWaitType: connect
+  activityPathMatch: ".*"
+  activityPathExclude: ""
+  waitNonePathMatch: ""
+  waitNonePathExclude: ""
+  waitConnectPathMatch: ""
+  waitConnectPathExclude: ""
+  waitLoadingPathMatch: ""
+  waitLoadingPathExclude: ""
+
 replicaCount: 1
 
 image:
