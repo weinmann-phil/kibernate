@@ -1,0 +1,26 @@
+name: Build and Publish
+on:
+  create:
+    tags:
+      - 'v*'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    name: Docker
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Log into GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker Build
+        script: make docker-build
+      - name: Docker Push
+        script: make docker-push-ghcr IMAGE_TAGS="latest ${GITHUB_REF#refs/tags/v}"
