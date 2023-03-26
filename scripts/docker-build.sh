@@ -13,6 +13,6 @@ docker buildx build --platform="$1" -f build/package/docker/Dockerfile -t kibern
 
 if [[ -n "$(command -v minikube)" ]] && minikube profile list | grep -q kibernate-test; then
   echo "minikube profile kibernate-test exists - importing image into minikube"
-  minikube image load kibernate:latest
+  docker save kibernate:latest | (eval "$(minikube docker-env -p kibernate-test)" && docker load)
 fi
 
