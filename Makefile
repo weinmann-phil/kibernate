@@ -9,3 +9,9 @@ ifndef IMAGE_TAGS
 	$(error IMAGE_TAGS is undefined)
 endif
 	./scripts/docker-push-ghcr.sh $(IMAGE_TAGS)
+
+helm-package:
+	./scripts/helm-package.sh
+
+helm-push-ghcr:
+	./scripts/helm-push-ghcr.sh
