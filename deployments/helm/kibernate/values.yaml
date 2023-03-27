@@ -22,7 +22,7 @@ kibernate:
 replicaCount: 1
 
 image:
-  repository: kibernate
+  repository: ghcr.io/kibernate/kibernate
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
