@@ -8,6 +8,7 @@ helm upgrade --install \
   -n default \
   kibernate \
   ./deployments/helm/kibernate \
+  --set image.repository=kibernate \
   --set image.tag=latest \
   --set image.pullPolicy=Never \
   --set kibernate.service=testtarget \
