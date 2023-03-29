@@ -107,12 +107,6 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 		request.Host = p.TargetBaseUrl.Host
 	}
 	request.RequestURI = ""
-	request.Header.Del("X-Forwarded-For")
-	request.Header.Del("X-Forwarded-Host")
-	request.Header.Del("X-Forwarded-Port")
-	request.Header.Del("X-Forwarded-Proto")
-	request.Header.Del("X-Forwarded-Server")
-	request.Header.Del("X-Real-Ip")
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
