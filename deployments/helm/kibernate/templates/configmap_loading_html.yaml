@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kibernate-loading-html
-  labels:
-    {{- include "kibernate.labels" . | nindent 4 }}
-data:
-    loading.html: |
-      {{- .Values.loadingHtml | nindent 6 }}
