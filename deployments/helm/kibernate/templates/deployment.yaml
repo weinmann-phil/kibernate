@@ -36,7 +36,7 @@ spec:
           {{- if gt (len .Values.kibernate) 0 }}
           args:
             {{- range $key, $value := .Values.kibernate }}
-            - -{{ $key }}={{ $value }}
+            - "-{{ $key }}={{ $value }}"
             {{- end }}
           {{- end }}
           ports:
