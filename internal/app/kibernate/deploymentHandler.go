@@ -52,6 +52,10 @@ func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
 		return nil, err
 	}
 	d := &DeploymentHandler{Config: config, KubeClientSet: clientSet}
+	err = d.UpdateStatus(nil)
+	if err != nil {
+		return nil, err
+	}
 	go func() {
 		err := d.ContinuouslyUpdateStatus()
 		if err != nil {
@@ -61,7 +65,32 @@ func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
 	return d, nil
 }
 
-func (d *DeploymentHandler) UpdateStatus(status DeploymentStatus) {
+func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
+	var deployment *appsv1.Deployment
+	if dpl == nil {
+		var err error
+		deployment, err = d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).Get(context.TODO(), d.Config.Deployment, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+	} else {
+		deployment = dpl
+	}
+	if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
+		d.SetStatus(DeploymentStatusReady)
+	} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {
+		d.SetStatus(DeploymentStatusDeactivating)
+	} else if deployment.Status.Replicas == 0 && *deployment.Spec.Replicas == 0 {
+		d.SetStatus(DeploymenStatusDeactivated)
+	} else if deployment.Status.ReadyReplicas == 0 && *deployment.Spec.Replicas > 0 {
+		d.SetStatus(DeploymentStatusActivating)
+	} else {
+		return errors.New("unexpected deployment status")
+	}
+	return nil
+}
+
+func (d *DeploymentHandler) SetStatus(status DeploymentStatus) {
 	if d.Status != status {
 		d.Status = status
 		d.LastStatusChange = time.Now()
@@ -83,16 +112,9 @@ func (d *DeploymentHandler) ContinuouslyUpdateStatus() error {
 			if err != nil {
 				return err
 			}
-			if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
-				d.UpdateStatus(DeploymentStatusReady)
-			} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {
-				d.UpdateStatus(DeploymentStatusDeactivating)
-			} else if deployment.Status.Replicas == 0 && *deployment.Spec.Replicas == 0 {
-				d.UpdateStatus(DeploymenStatusDeactivated)
-			} else if deployment.Status.ReadyReplicas == 0 && *deployment.Spec.Replicas > 0 {
-				d.UpdateStatus(DeploymentStatusActivating)
-			} else {
-				return errors.New("unexpected deployment status")
+			err := d.UpdateStatus(deployment)
+			if err != nil {
+				return err
 			}
 		}
 	}
