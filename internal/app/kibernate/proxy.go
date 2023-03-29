@@ -84,7 +84,6 @@ func (p *Proxy) Start() error {
 
 func (p *Proxy) ContinuouslyCheckIdleness() error {
 	for range time.Tick(10 * time.Second) {
-		fmt.Println("MEEP")
 		if time.Since(p.LastActivity) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second {
 			err := p.Deployment.DeactivateDeployment()
 			if err != nil {
