@@ -13,4 +13,4 @@ for tag in "$@"; do
   tags="$tags -t ghcr.io/kibernate/kibernate:$tag"
 done
 
-docker buildx build --platform linux/amd64 $tags --push -f build/package/docker/Dockerfile .
+docker buildx build --platform linux/amd64,linux/arm64 $tags --push -f build/package/docker/Dockerfile .
