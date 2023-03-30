@@ -27,20 +27,24 @@ const (
 )
 
 type Config struct {
-	Namespace              string
-	Service                string
-	Deployment             string
-	ListenPort             uint16
-	ServicePort            uint16
-	IdleTimeoutSecs        uint16
-	CustomHostValue        string
-	DefaultWaitType        WaitType
-	ActivityPathMatch      *regexp.Regexp
-	ActivityPathExclude    *regexp.Regexp
-	WaitNonePathMatch      *regexp.Regexp
-	WaitNonePathExclude    *regexp.Regexp
-	WaitConnectPathMatch   *regexp.Regexp
-	WaitConnectPathExclude *regexp.Regexp
-	WaitLoadingPathMatch   *regexp.Regexp
-	WaitLoadingPathExclude *regexp.Regexp
+	Namespace                     string
+	Service                       string
+	Deployment                    string
+	ListenPort                    uint16
+	ServicePort                   uint16
+	IdleTimeoutSecs               uint16
+	CustomHostValue               string
+	DefaultWaitType               WaitType
+	ActivityPathMatch             *regexp.Regexp
+	ActivityPathExclude           *regexp.Regexp
+	WaitNonePathMatch             *regexp.Regexp
+	WaitNonePathExclude           *regexp.Regexp
+	WaitConnectPathMatch          *regexp.Regexp
+	WaitConnectPathExclude        *regexp.Regexp
+	WaitLoadingPathMatch          *regexp.Regexp
+	WaitLoadingPathExclude        *regexp.Regexp
+	UptimeMonitorUserAgentMatch   *regexp.Regexp
+	UptimeMonitorUserAgentExclude *regexp.Regexp
+	UptimeMonitorResponseCode     uint16
+	UptimeMonitorResponseMessage  string
 }

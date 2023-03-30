@@ -38,6 +38,10 @@ func main() {
 	waitConnectPathExclude := flag.String("waitConnectPathExclude", "", "A regular expression to exclude paths that should not wait for deployment readiness")
 	waitLoadingPathMatch := flag.String("waitLoadingPathMatch", "", "A regular expression to match paths that should deliver a loading page while waiting for the deployment to be ready")
 	waitLoadingPathExclude := flag.String("waitLoadingPathExclude", "", "A regular expression to exclude paths that should not deliver a loading page while waiting for the deployment to be ready")
+	uptimeMonitorUserAgentMatch := flag.String("uptimeMonitorUserAgentMatch", "", "A regular expression to match User-Agent headers that should be considered uptime monitoring requests")
+	uptimeMonitorUserAgentExclude := flag.String("uptimeMonitorUserAgentExclude", "", "A regular expression to exclude User-Agent headers that should not be considered uptime monitoring requests")
+	uptimeMonitorResponseCode := flag.Uint("uptimeMonitorResponseCode", 200, "The HTTP response code to return for uptime monitoring requests [default: 200]")
+	uptimeMonitorResponseMessage := flag.String("uptimeMonitorResponseMessage", "OK", "The HTTP response message to return for uptime monitoring requests [default: OK]")
 	flag.Parse()
 	if *service == "" || *deployment == "" {
 		panic("service and deployment must be set")
@@ -54,6 +58,8 @@ func main() {
 		CustomHostValue: *customHostValue,
 		DefaultWaitType: kibernate.WaitType(*defaultWaitType),
 		ListenPort:      8080,
+		UptimeMonitorResponseCode: uint16(*uptimeMonitorResponseCode),
+		UptimeMonitorResponseMessage: *uptimeMonitorResponseMessage,
 	}
 	if *activityPathMatch != "" {
 		kibernateConfig.ActivityPathMatch = regexp.MustCompile(*activityPathMatch)
@@ -78,6 +84,12 @@ func main() {
 	}
 	if *waitLoadingPathExclude != "" {
 		kibernateConfig.WaitLoadingPathExclude = regexp.MustCompile(*waitLoadingPathExclude)
+	}
+	if *uptimeMonitorUserAgentMatch != "" {
+		kibernateConfig.UptimeMonitorUserAgentMatch = regexp.MustCompile(*uptimeMonitorUserAgentMatch)
+	}
+	if *uptimeMonitorUserAgentExclude != "" {
+		kibernateConfig.UptimeMonitorUserAgentExclude = regexp.MustCompile(*uptimeMonitorUserAgentExclude)
 	}
 	kibernateInstance := kibernate.NewKibernate(kibernateConfig)
 	err := kibernateInstance.Run()
