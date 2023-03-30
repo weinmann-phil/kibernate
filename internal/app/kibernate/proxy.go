@@ -127,18 +127,20 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 
 func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var err error
-	if p.Config.UptimeMonitorUserAgentMatch.MatchString(request.Header.Get("User-Agent")) && !p.Config.UptimeMonitorUserAgentExclude.MatchString(request.Header.Get("User-Agent")) {
-		if p.Deployment.Status == DeploymentStatusReady {
-			p.PatchThrough(writer, request)
-		} else {
-			writer.Header().Add("Content-Type", "text/plain")
-			writer.WriteHeader(http.StatusOK)
-			_, err = writer.Write([]byte(p.Config.UptimeMonitorResponseMessage))
-			if err != nil {
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
+	if p.Config.UptimeMonitorUserAgentMatch != nil && p.Config.UptimeMonitorUserAgentMatch.MatchString(request.Header.Get("User-Agent")) {
+		if p.Config.UptimeMonitorUserAgentExclude == nil || !p.Config.UptimeMonitorUserAgentExclude.MatchString(request.Header.Get("User-Agent")) {
+			if p.Deployment.Status == DeploymentStatusReady {
+				p.PatchThrough(writer, request)
+			} else {
+				writer.Header().Add("Content-Type", "text/plain")
+				writer.WriteHeader(http.StatusOK)
+				_, err = writer.Write([]byte(p.Config.UptimeMonitorResponseMessage))
+				if err != nil {
+					http.Error(writer, err.Error(), http.StatusInternalServerError)
+				}
 			}
+			return
 		}
-		return
 	}
 	if p.IsPathConsideredActivity(request.URL.Path) {
 		p.LastActivity = time.Now()
