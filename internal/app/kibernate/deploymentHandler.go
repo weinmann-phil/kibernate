@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"log"
 	"time"
 )
 
@@ -45,21 +46,24 @@ type DeploymentHandler struct {
 func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
 	clientConfig, err := rest.InClusterConfig()
 	if err != nil {
+		log.Printf("Error creating in-cluster config: %s", err.Error())
 		return nil, err
 	}
 	clientSet, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
+		log.Printf("Error creating client set: %s", err.Error())
 		return nil, err
 	}
 	d := &DeploymentHandler{Config: config, KubeClientSet: clientSet}
 	err = d.UpdateStatus(nil)
 	if err != nil {
+		log.Printf("Error updating deployment status: %s", err.Error())
 		return nil, err
 	}
 	go func() {
 		err := d.ContinuouslyUpdateStatus()
 		if err != nil {
-			panic(err)
+			log.Fatalf("Error continuously updating deployment status: %s", err.Error())
 		}
 	}()
 	return d, nil
@@ -71,18 +75,23 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 		var err error
 		deployment, err = d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).Get(context.TODO(), d.Config.Deployment, metav1.GetOptions{})
 		if err != nil {
+			log.Printf("Error getting deployment: %s", err.Error())
 			return err
 		}
 	} else {
 		deployment = dpl
 	}
 	if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
+		log.Println("Deployment is ready")
 		d.SetStatus(DeploymentStatusReady)
 	} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {
+		log.Println("Deployment is deactivating")
 		d.SetStatus(DeploymentStatusDeactivating)
 	} else if deployment.Status.Replicas == 0 && *deployment.Spec.Replicas == 0 {
+		log.Println("Deployment is deactivated")
 		d.SetStatus(DeploymenStatusDeactivated)
 	} else if deployment.Status.ReadyReplicas == 0 && *deployment.Spec.Replicas > 0 {
+		log.Println("Deployment is activating")
 		d.SetStatus(DeploymentStatusActivating)
 	} else {
 		return errors.New("unexpected deployment status")
@@ -92,6 +101,7 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 
 func (d *DeploymentHandler) SetStatus(status DeploymentStatus) {
 	if d.Status != status {
+		log.Printf("Deployment status changed from %s to %s", d.Status, status)
 		d.Status = status
 		d.LastStatusChange = time.Now()
 	}
@@ -103,6 +113,7 @@ func (d *DeploymentHandler) ContinuouslyUpdateStatus() error {
 		Watch:         true,
 	})
 	if err != nil {
+		log.Printf("Error creating deployment watcher: %s", err.Error())
 		return err
 	}
 	defer deploymentWatcher.Stop()
@@ -110,10 +121,12 @@ func (d *DeploymentHandler) ContinuouslyUpdateStatus() error {
 		if event.Type == "MODIFIED" {
 			deployment := event.Object.(*appsv1.Deployment)
 			if err != nil {
+				log.Printf("Error converting event object to deployment: %s", err.Error())
 				return err
 			}
 			err := d.UpdateStatus(deployment)
 			if err != nil {
+				log.Printf("Error updating deployment status: %s", err.Error())
 				return err
 			}
 		}
@@ -135,12 +148,14 @@ func (d *DeploymentHandler) ActivateDeployment() error {
 	}
 	scale, err := d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).GetScale(context.TODO(), d.Config.Deployment, metav1.GetOptions{})
 	if err != nil {
+		log.Printf("Error getting deployment scale: %s", err.Error())
 		return err
 	}
 	if scale.Spec.Replicas < 1 {
 		scale.Spec.Replicas = 1
 		_, err := d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).UpdateScale(context.TODO(), d.Config.Deployment, scale, metav1.UpdateOptions{})
 		if err != nil {
+			log.Printf("Error updating deployment scale: %s", err.Error())
 			return err
 		}
 	}
@@ -153,12 +168,16 @@ func (d *DeploymentHandler) DeactivateDeployment() error {
 	}
 	scale, err := d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).GetScale(context.TODO(), d.Config.Deployment, metav1.GetOptions{})
 	if err != nil {
+		log.Printf("Error getting deployment scale: %s", err.Error())
 		return err
 	}
 	if scale.Spec.Replicas > 0 {
 		scale.Spec.Replicas = 0
 		_, err := d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).UpdateScale(context.TODO(), d.Config.Deployment, scale, metav1.UpdateOptions{})
-		return err
+		if err != nil {
+			log.Printf("Error updating deployment scale: %s", err.Error())
+			return err
+		}
 	}
 	return nil
 }

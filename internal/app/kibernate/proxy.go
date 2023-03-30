@@ -19,6 +19,7 @@ package kibernate
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -40,6 +41,7 @@ type Proxy struct {
 func NewProxy(config Config) (*Proxy, error) {
 	targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", config.Service, config.ServicePort))
 	if err != nil {
+		log.Printf("Error parsing target base URL: %s", err.Error())
 		return nil, err
 	}
 	httpServer := http.Server{
@@ -53,11 +55,13 @@ func NewProxy(config Config) (*Proxy, error) {
 	p.HttpServer.Handler = p
 	p.Deployment, err = NewDeploymentHandler(p.Config)
 	if err != nil {
+		log.Printf("Error creating deployment handler: %s", err.Error())
 		return nil, err
 	}
 	p.WaitTypeConnectHandler = NewWaitTypeConnectHandler(p.Config, p, p.Deployment)
 	p.WaitTypeLoadingHandler, err = NewWaitTypeLoadingHandler(p.Config)
 	if err != nil {
+		log.Printf("Error creating wait type loading handler: %s", err.Error())
 		return nil, err
 	}
 	p.WaitTypeNoneHandler = NewWaitTypeNoneHandler(p.Config)
@@ -73,6 +77,7 @@ func NewProxy(config Config) (*Proxy, error) {
 }
 
 func (p *Proxy) Start() error {
+	log.Printf("Starting proxy on port %d", p.Config.ListenPort)
 	go func() {
 		err := p.ContinuouslyCheckIdleness()
 		if err != nil {
@@ -85,8 +90,10 @@ func (p *Proxy) Start() error {
 func (p *Proxy) ContinuouslyCheckIdleness() error {
 	for range time.Tick(10 * time.Second) {
 		if time.Since(p.LastActivity) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second {
+			log.Printf("Deployment %s has been idle for %d seconds, deactivating", p.Config.Deployment, time.Since(p.LastActivity)*time.Second)
 			err := p.Deployment.DeactivateDeployment()
 			if err != nil {
+				log.Printf("Error deactivating deployment: %s", err.Error())
 				return err
 			}
 		}
@@ -95,6 +102,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 }
 
 func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) {
+	log.Printf("Proxying request for path '%s'", request.URL.Path)
 	originalUrl := request.URL
 	request.URL.Host = p.TargetBaseUrl.Host
 	request.URL.Scheme = p.TargetBaseUrl.Scheme
@@ -109,6 +117,7 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Printf("Error proxying request: %s", err.Error())
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -120,6 +129,7 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 	writer.WriteHeader(response.StatusCode)
 	_, err = io.Copy(writer, response.Body)
 	if err != nil {
+		log.Printf("Error copying response body: %s", err.Error())
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -129,6 +139,7 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var err error
 	if p.Config.UptimeMonitorUserAgentMatch != nil && p.Config.UptimeMonitorUserAgentMatch.MatchString(request.Header.Get("User-Agent")) {
 		if p.Config.UptimeMonitorUserAgentExclude == nil || !p.Config.UptimeMonitorUserAgentExclude.MatchString(request.Header.Get("User-Agent")) {
+			log.Printf("Uptime monitor request received with User-Agent '%s' for path '%s'", request.Header.Get("User-Agent"), request.URL.Path)
 			if p.Deployment.Status == DeploymentStatusReady {
 				p.PatchThrough(writer, request)
 			} else {
@@ -143,26 +154,34 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 	if p.IsPathConsideredActivity(request.URL.Path) {
+		log.Printf("Activity detected for path '%s'", request.URL.Path)
 		p.LastActivity = time.Now()
 	}
 	if p.Deployment.Status == DeploymentStatusReady {
 		p.PatchThrough(writer, request)
 	} else {
+		log.Printf("Deployment %s is not ready, activating", p.Config.Deployment)
 		err = p.Deployment.ActivateDeployment()
 		if err != nil {
+			log.Printf("Error activating deployment: %s", err.Error())
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if p.IsPathMatchingFor(WaitTypeConnect, request.URL.Path) {
+			log.Printf("Path '%s' matches wait type '%s'", request.URL.Path, WaitTypeConnect)
 			err = p.WaitTypeConnectHandler.Handle(writer, request)
 		} else if p.IsPathMatchingFor(WaitTypeLoading, request.URL.Path) {
+			log.Printf("Path '%s' matches wait type '%s'", request.URL.Path, WaitTypeLoading)
 			err = p.WaitTypeLoadingHandler.Handle(writer, request)
 		} else if p.IsPathMatchingFor(WaitTypeNone, request.URL.Path) {
+			log.Printf("Path '%s' matches wait type '%s'", request.URL.Path, WaitTypeNone)
 			err = p.WaitTypeNoneHandler.Handle(writer, request)
 		} else {
+			log.Printf("Path '%s' matches default wait type '%s'", request.URL.Path, p.Config.DefaultWaitType)
 			err = p.DefaultWaitTypeHandler.Handle(writer, request)
 		}
 		if err != nil {
+			log.Printf("Error handling request: %s", err.Error())
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -170,6 +189,7 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (p *Proxy) Stop() error {
+	log.Println("Stopping proxy")
 	return p.HttpServer.Close()
 }
 

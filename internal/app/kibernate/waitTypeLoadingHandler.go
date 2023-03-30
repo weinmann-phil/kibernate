@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"log"
 	"net/http"
 )
 
@@ -33,18 +34,22 @@ type WaitTypeLoadingHandler struct {
 func NewWaitTypeLoadingHandler(config Config) (*WaitTypeLoadingHandler, error) {
 	clientConfig, err := rest.InClusterConfig()
 	if err != nil {
+		log.Printf("Error creating in-cluster config: %s", err.Error())
 		return nil, err
 	}
 	clientSet, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
+		log.Printf("Error creating client set: %s", err.Error())
 		return nil, err
 	}
 	loadingHtmlConfigMap, err := clientSet.CoreV1().ConfigMaps(config.Namespace).Get(context.TODO(), "kibernate-loading-html", metav1.GetOptions{})
 	if err != nil {
+		log.Printf("Error getting kibernate-loading-html config map: %s", err.Error())
 		return nil, err
 	}
 	loadingHtml, ok := loadingHtmlConfigMap.Data["loading.html"]
 	if !ok {
+		log.Println("loading.html not found in kibernate-loading-html config map")
 		return nil, errors.New("loading.html not found in kibernate-loading-html config map")
 	}
 	return &WaitTypeLoadingHandler{

@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"github.com/kibernate/kibernate/internal/app/kibernate"
+	"log"
 	"regexp"
 )
 
@@ -50,15 +51,15 @@ func main() {
 		panic("defaultWaitType must be connect, loading, or none")
 	}
 	kibernateConfig := kibernate.Config{
-		Namespace:       *namespace,
-		Service:         *service,
-		Deployment:      *deployment,
-		ServicePort:     uint16(*servicePort),
-		IdleTimeoutSecs: uint16(*idleTimeoutSecs),
-		CustomHostValue: *customHostValue,
-		DefaultWaitType: kibernate.WaitType(*defaultWaitType),
-		ListenPort:      8080,
-		UptimeMonitorResponseCode: uint16(*uptimeMonitorResponseCode),
+		Namespace:                    *namespace,
+		Service:                      *service,
+		Deployment:                   *deployment,
+		ServicePort:                  uint16(*servicePort),
+		IdleTimeoutSecs:              uint16(*idleTimeoutSecs),
+		CustomHostValue:              *customHostValue,
+		DefaultWaitType:              kibernate.WaitType(*defaultWaitType),
+		ListenPort:                   8080,
+		UptimeMonitorResponseCode:    uint16(*uptimeMonitorResponseCode),
 		UptimeMonitorResponseMessage: *uptimeMonitorResponseMessage,
 	}
 	if *activityPathMatch != "" {
@@ -94,6 +95,6 @@ func main() {
 	kibernateInstance := kibernate.NewKibernate(kibernateConfig)
 	err := kibernateInstance.Run()
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf("Error running kibernate: %s", err.Error())
 	}
 }

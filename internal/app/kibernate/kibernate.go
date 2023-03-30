@@ -16,6 +16,8 @@
 
 package kibernate
 
+import "log"
+
 func NewKibernate(config Config) *Kibernate {
 	return &Kibernate{config}
 }
@@ -25,10 +27,16 @@ type Kibernate struct {
 }
 
 func (k *Kibernate) Run() error {
+	log.Println("Starting kibernate")
 	proxy, err := NewProxy(k.Config)
 	if err != nil {
+		log.Printf("Error creating proxy: %s", err.Error())
 		return err
 	}
 	err = proxy.Start()
-	return err
+	if err != nil {
+		log.Printf("Error starting proxy: %s", err.Error())
+		return err
+	}
+	return nil
 }

@@ -17,6 +17,7 @@
 package kibernate
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -35,7 +36,9 @@ func NewWaitTypeConnectHandler(config Config, proxy *Proxy, deployment *Deployme
 }
 
 func (w *WaitTypeConnectHandler) Handle(writer http.ResponseWriter, request *http.Request) error {
+	log.Printf("Handling request with wait type connect for path '%s' - waiting for deployment to become ready", request.URL.Path)
 	w.Deployment.WaitForReady()
+	log.Printf("Deployment is ready, proxying request for path '%s'", request.URL.Path)
 	w.Proxy.PatchThrough(writer, request)
 	return nil
 }

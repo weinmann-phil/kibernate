@@ -16,7 +16,10 @@
 
 package kibernate
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 type WaitTypeNoneHandler struct {
 	Config Config
@@ -30,6 +33,10 @@ func NewWaitTypeNoneHandler(config Config) *WaitTypeNoneHandler {
 
 func (w *WaitTypeNoneHandler) Handle(writer http.ResponseWriter, request *http.Request) error {
 	writer.WriteHeader(http.StatusServiceUnavailable)
-	_, err := writer.Write([]byte("503 - Kibernate: Service Unavailable"))
-	return err
+	_, err := writer.Write([]byte("503 - Service Unavailable"))
+	if err != nil {
+		log.Printf("Error writing response: %s", err.Error())
+		return err
+	}
+	return nil
 }
