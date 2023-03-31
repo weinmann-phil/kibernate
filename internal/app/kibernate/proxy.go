@@ -108,6 +108,7 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 	request.URL.Scheme = p.TargetBaseUrl.Scheme
 	request.URL.Path = fmt.Sprintf("%s%s", p.TargetBaseUrl.Path, originalUrl.Path)
 	request.URL.RawPath = fmt.Sprintf("%s%s", p.TargetBaseUrl.Path, originalUrl.RawPath)
+	request.URL.RawQuery = originalUrl.RawQuery
 	if p.Config.CustomHostValue != "" {
 		request.Host = p.Config.CustomHostValue
 	} else {
