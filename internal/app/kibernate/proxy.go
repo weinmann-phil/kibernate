@@ -89,8 +89,8 @@ func (p *Proxy) Start() error {
 
 func (p *Proxy) ContinuouslyCheckIdleness() error {
 	for range time.Tick(10 * time.Second) {
-		if time.Since(p.LastActivity) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange) > time.Duration(p.Config.IdleTimeoutSecs)*time.Second {
-			log.Printf("Deployment %s has been idle for %d seconds, deactivating", p.Config.Deployment, time.Since(p.LastActivity)*time.Second)
+		if time.Since(p.LastActivity).Seconds() > float64(p.Config.IdleTimeoutSecs) && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange).Seconds() > float64(p.Config.IdleTimeoutSecs) {
+			log.Printf("Deployment %s has been idle for %d seconds, deactivating", p.Config.Deployment, uint16(time.Since(p.LastActivity).Seconds()))
 			err := p.Deployment.DeactivateDeployment()
 			if err != nil {
 				log.Printf("Error deactivating deployment: %s", err.Error())
