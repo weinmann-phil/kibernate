@@ -33,7 +33,6 @@ type Config struct {
 	ListenPort                    uint16
 	ServicePort                   uint16
 	IdleTimeoutSecs               uint16
-	CustomHostValue               string
 	DefaultWaitType               WaitType
 	ActivityPathMatch             *regexp.Regexp
 	ActivityPathExclude           *regexp.Regexp

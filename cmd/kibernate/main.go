@@ -29,7 +29,6 @@ func main() {
 	deployment := flag.String("deployment", "", "The name of the deployment to be activated/deactivated")
 	servicePort := flag.Uint("servicePort", 8080, "The port of the service to be proxied [default: 8080]")
 	idleTimeoutSecs := flag.Uint("idleTimeoutSecs", 600, "The number of seconds to wait for activity before deactivating the deployment [default: 600]")
-	customHostValue := flag.String("customHostValue", "", "The value to use for the HTTP Host header")
 	defaultWaitType := flag.String("defaultWaitType", "connect", "The type of wait to perform by default - connect, loading, none [default: connect]")
 	activityPathMatch := flag.String("activityPathMatch", ".*", "A regular expression to match paths that should be considered activity [default: \".*\"]")
 	activityPathExclude := flag.String("activityPathExclude", "", "A regular expression to exclude paths that should not be considered activity")
@@ -56,7 +55,6 @@ func main() {
 		Deployment:                   *deployment,
 		ServicePort:                  uint16(*servicePort),
 		IdleTimeoutSecs:              uint16(*idleTimeoutSecs),
-		CustomHostValue:              *customHostValue,
 		DefaultWaitType:              kibernate.WaitType(*defaultWaitType),
 		ListenPort:                   8080,
 		UptimeMonitorResponseCode:    uint16(*uptimeMonitorResponseCode),
