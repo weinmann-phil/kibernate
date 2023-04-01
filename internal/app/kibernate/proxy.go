@@ -21,6 +21,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"regexp"
 	"time"
@@ -103,32 +104,8 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 
 func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) {
 	log.Printf("Proxying request for path '%s'", request.URL.Path)
-	originalUrl := request.URL
-	request.URL.Host = p.TargetBaseUrl.Host
-	request.URL.Scheme = p.TargetBaseUrl.Scheme
-	request.URL.Path = fmt.Sprintf("%s%s", p.TargetBaseUrl.Path, originalUrl.Path)
-	request.URL.RawPath = fmt.Sprintf("%s%s", p.TargetBaseUrl.Path, originalUrl.RawPath)
-	request.URL.RawQuery = originalUrl.RawQuery
-	request.RequestURI = ""
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Printf("Error proxying request: %s", err.Error())
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	for key, values := range response.Header {
-		for _, value := range values {
-			writer.Header().Add(key, value)
-		}
-	}
-	writer.WriteHeader(response.StatusCode)
-	_, err = io.Copy(writer, response.Body)
-	if err != nil {
-		log.Printf("Error copying response body: %s", err.Error())
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	reverseProxy := httputil.NewSingleHostReverseProxy(p.TargetBaseUrl)
+	reverseProxy.ServeHTTP(writer, request)
 }
 
 func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
