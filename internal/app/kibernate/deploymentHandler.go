@@ -19,11 +19,14 @@ package kibernate
 import (
 	"context"
 	"errors"
+	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"log"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -85,6 +88,20 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 		deployment = dpl
 	}
 	if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
+		if d.Config.ReadinessProbePath != "" {
+			targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", d.Config.Service, d.Config.ServicePort))
+			if err != nil {
+				return err
+			}
+			readinessCheckStartTime := time.Now()
+			for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
+				resp, err := http.Get(targetBaseUrl.String() + d.Config.ReadinessProbePath)
+				if err == nil && resp.StatusCode == 200 {
+					break
+				}
+				time.Sleep(1 * time.Second)
+			}
+		}
 		log.Println("Deployment is ready")
 		d.SetStatus(DeploymentStatusReady)
 	} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {

@@ -46,6 +46,8 @@ func main() {
 	noDeactivationMoFrFromToUTC := flag.String("noDeactivationMoFrFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Monday through Friday [default: none]")
 	noDeactivationSatFromToUTC := flag.String("noDeactivationSatFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Saturday [default: none]")
 	noDeactivationSunFromToUTC := flag.String("noDeactivationSunFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Sunday [default: none]")
+	readinessProbePath := flag.String("readinessProbePath", "", "The path of the readiness probe [default: none]")
+	readinessTimeoutSecs := flag.Uint("readinessTimeoutSecs", 30, "The number of seconds to wait for the readiness probe to return a 200 response before proxying requests anyway [default: 30]")
 	flag.Parse()
 	if *service == "" || *deployment == "" {
 		panic("service and deployment must be set")
@@ -63,6 +65,8 @@ func main() {
 		ListenPort:                   8080,
 		UptimeMonitorResponseCode:    uint16(*uptimeMonitorResponseCode),
 		UptimeMonitorResponseMessage: *uptimeMonitorResponseMessage,
+		ReadinessTimeoutSecs:         uint16(*readinessTimeoutSecs),
+		ReadinessProbePath:           *readinessProbePath,
 	}
 	if *activityPathMatch != "" {
 		kibernateConfig.ActivityPathMatch = regexp.MustCompile(*activityPathMatch)
