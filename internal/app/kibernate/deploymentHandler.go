@@ -61,9 +61,12 @@ func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
 		return nil, err
 	}
 	go func() {
-		err := d.ContinuouslyUpdateStatus()
-		if err != nil {
-			log.Fatalf("Error continuously updating deployment status: %s", err.Error())
+		for {
+			err := d.ContinuouslyUpdateStatus()
+			if err != nil {
+				log.Fatalf("Error continuously updating deployment status: %s", err.Error())
+			}
+			time.Sleep(5 * time.Second)
 		}
 	}()
 	return d, nil
@@ -108,6 +111,10 @@ func (d *DeploymentHandler) SetStatus(status DeploymentStatus) {
 }
 
 func (d *DeploymentHandler) ContinuouslyUpdateStatus() error {
+	err := d.UpdateStatus(nil)
+	if err != nil {
+		return err
+	}
 	deploymentWatcher, err := d.KubeClientSet.AppsV1().Deployments(d.Config.Namespace).Watch(context.TODO(), metav1.ListOptions{
 		FieldSelector: "metadata.name=" + d.Config.Deployment,
 		Watch:         true,
