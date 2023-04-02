@@ -158,6 +158,7 @@ func (d *DeploymentHandler) ActivateDeployment() error {
 			log.Printf("Error updating deployment scale: %s", err.Error())
 			return err
 		}
+		d.SetStatus(DeploymentStatusActivating)
 	}
 	return nil
 }
@@ -178,6 +179,7 @@ func (d *DeploymentHandler) DeactivateDeployment() error {
 			log.Printf("Error updating deployment scale: %s", err.Error())
 			return err
 		}
+		d.SetStatus(DeploymentStatusDeactivating)
 	}
 	return nil
 }
