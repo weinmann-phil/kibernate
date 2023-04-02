@@ -16,7 +16,9 @@
 
 package kibernate
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type WaitType string
 
@@ -46,4 +48,7 @@ type Config struct {
 	UptimeMonitorUserAgentExclude *regexp.Regexp
 	UptimeMonitorResponseCode     uint16
 	UptimeMonitorResponseMessage  string
+	NoDeactivationMoFrFromToUTC   []string
+	NoDeactivationSatFromToUTC    []string
+	NoDeactivationSunFromToUTC    []string
 }

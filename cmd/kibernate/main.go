@@ -21,6 +21,7 @@ import (
 	"github.com/kibernate/kibernate/internal/app/kibernate"
 	"log"
 	"regexp"
+	"strings"
 )
 
 func main() {
@@ -42,6 +43,9 @@ func main() {
 	uptimeMonitorUserAgentExclude := flag.String("uptimeMonitorUserAgentExclude", "", "A regular expression to exclude User-Agent headers that should not be considered uptime monitoring requests")
 	uptimeMonitorResponseCode := flag.Uint("uptimeMonitorResponseCode", 200, "The HTTP response code to return for uptime monitoring requests [default: 200]")
 	uptimeMonitorResponseMessage := flag.String("uptimeMonitorResponseMessage", "OK", "The HTTP response message to return for uptime monitoring requests [default: OK]")
+	noDeactivationMoFrFromToUTC := flag.String("noDeactivationMoFrFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Monday through Friday [default: none]")
+	noDeactivationSatFromToUTC := flag.String("noDeactivationSatFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Saturday [default: none]")
+	noDeactivationSunFromToUTC := flag.String("noDeactivationSunFromToUTC", "", "A from-to UTC time range in the format HH:MM-HH:MM that should not be considered for deactivation on Sunday [default: none]")
 	flag.Parse()
 	if *service == "" || *deployment == "" {
 		panic("service and deployment must be set")
@@ -89,6 +93,36 @@ func main() {
 	}
 	if *uptimeMonitorUserAgentExclude != "" {
 		kibernateConfig.UptimeMonitorUserAgentExclude = regexp.MustCompile(*uptimeMonitorUserAgentExclude)
+	}
+	if *noDeactivationMoFrFromToUTC != "" {
+		fromTo := strings.SplitN(*noDeactivationMoFrFromToUTC, "-", 2)
+		if len(fromTo) != 2 {
+			panic("noDeactivationMoFrFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		if !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[0]) || !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[1]) {
+			panic("noDeactivationMoFrFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		kibernateConfig.NoDeactivationMoFrFromToUTC = fromTo
+	}
+	if *noDeactivationSatFromToUTC != "" {
+		fromTo := strings.SplitN(*noDeactivationSatFromToUTC, "-", 2)
+		if len(fromTo) != 2 {
+			panic("noDeactivationSatFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		if !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[0]) || !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[1]) {
+			panic("noDeactivationSatFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		kibernateConfig.NoDeactivationSatFromToUTC = fromTo
+	}
+	if *noDeactivationSunFromToUTC != "" {
+		fromTo := strings.SplitN(*noDeactivationSunFromToUTC, "-", 2)
+		if len(fromTo) != 2 {
+			panic("noDeactivationSunFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		if !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[0]) || !regexp.MustCompile(`^\d\d:\d\d$`).MatchString(fromTo[1]) {
+			panic("noDeactivationSunFromToUTC must be in the format HH:MM-HH:MM")
+		}
+		kibernateConfig.NoDeactivationSunFromToUTC = fromTo
 	}
 	kibernateInstance := kibernate.NewKibernate(kibernateConfig)
 	err := kibernateInstance.Run()

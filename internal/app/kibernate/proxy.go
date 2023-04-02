@@ -89,6 +89,46 @@ func (p *Proxy) Start() error {
 
 func (p *Proxy) ContinuouslyCheckIdleness() error {
 	for range time.Tick(10 * time.Second) {
+		now := time.Now().UTC()
+		if p.Config.NoDeactivationMoFrFromToUTC != nil && (now.Weekday() == time.Monday || now.Weekday() == time.Tuesday || now.Weekday() == time.Wednesday || now.Weekday() == time.Thursday || now.Weekday() == time.Friday) {
+			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationMoFrFromToUTC[0])
+			if err != nil {
+				return err
+			}
+			toTime, err := time.Parse("15:04", p.Config.NoDeactivationMoFrFromToUTC[1])
+			if err != nil {
+				return err
+			}
+			if fromTime.After(now) || toTime.Before(now) {
+				continue
+			}
+		}
+		if p.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
+			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationSatFromToUTC[0])
+			if err != nil {
+				return err
+			}
+			toTime, err := time.Parse("15:04", p.Config.NoDeactivationSatFromToUTC[1])
+			if err != nil {
+				return err
+			}
+			if fromTime.After(now) || toTime.Before(now) {
+				continue
+			}
+		}
+		if p.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
+			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationSunFromToUTC[0])
+			if err != nil {
+				return err
+			}
+			toTime, err := time.Parse("15:04", p.Config.NoDeactivationSunFromToUTC[1])
+			if err != nil {
+				return err
+			}
+			if fromTime.After(now) || toTime.Before(now) {
+				continue
+			}
+		}
 		if time.Since(p.LastActivity).Seconds() > float64(p.Config.IdleTimeoutSecs) && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange).Seconds() > float64(p.Config.IdleTimeoutSecs) {
 			log.Printf("Deployment %s has been idle for %d seconds, deactivating", p.Config.Deployment, uint16(time.Since(p.LastActivity).Seconds()))
 			err := p.Deployment.DeactivateDeployment()
