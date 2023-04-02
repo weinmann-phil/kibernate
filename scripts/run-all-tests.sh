@@ -8,6 +8,7 @@ function finally() {
   ./scripts/tear-down-testing-env.sh
 }
 trap finally EXIT
+./scripts/prepare-helm-chart.sh
 ./scripts/docker-build.sh
 kubectl create deployment testtarget --image=ghcr.io/nginxinc/nginx-unprivileged:1.23-alpine --replicas=1 --port=8080
 kubectl expose deployment testtarget --port=8080 --target-port=8080
