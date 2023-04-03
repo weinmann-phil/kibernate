@@ -99,7 +99,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if err != nil {
 				return err
 			}
-			if fromTime.After(now) || toTime.Before(now) {
+			if fromTime.Before(now) && toTime.After(now) {
 				continue
 			}
 		}
