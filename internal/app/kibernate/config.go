@@ -51,6 +51,7 @@ type Config struct {
 	NoDeactivationMoFrFromToUTC   []string
 	NoDeactivationSatFromToUTC    []string
 	NoDeactivationSunFromToUTC    []string
+	NoDeactivationAutostart       bool
 	ReadinessProbePath            string
 	ReadinessTimeoutSecs          uint16
 }

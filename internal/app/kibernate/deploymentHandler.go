@@ -72,6 +72,12 @@ func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
 			time.Sleep(5 * time.Second)
 		}
 	}()
+	go func() {
+		err := d.ContinuouslyHandleNoDeactivationAutostart()
+		if err != nil {
+			log.Fatalf("Error continuously handling noDeactivation autostart: %s", err.Error())
+		}
+	}()
 	return d, nil
 }
 
@@ -204,6 +210,65 @@ func (d *DeploymentHandler) DeactivateDeployment() error {
 			return err
 		}
 		d.SetStatus(DeploymentStatusDeactivating)
+	}
+	return nil
+}
+
+func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
+	if d.Config.NoDeactivationAutostart {
+		for range time.Tick(30 * time.Second) {
+			if d.Status == DeploymenStatusDeactivated {
+				now := time.Now().UTC()
+				if d.Config.NoDeactivationMoFrFromToUTC != nil && (now.Weekday() == time.Monday || now.Weekday() == time.Tuesday || now.Weekday() == time.Wednesday || now.Weekday() == time.Thursday || now.Weekday() == time.Friday) {
+					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationMoFrFromToUTC[0])
+					if err != nil {
+						return err
+					}
+					toTime, err := time.Parse("15:04", d.Config.NoDeactivationMoFrFromToUTC[1])
+					if err != nil {
+						return err
+					}
+					if fromTime.Before(now) && toTime.After(now) {
+						err = d.ActivateDeployment()
+						if err != nil {
+							return err
+						}
+					}
+				}
+				if d.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
+					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationSatFromToUTC[0])
+					if err != nil {
+						return err
+					}
+					toTime, err := time.Parse("15:04", d.Config.NoDeactivationSatFromToUTC[1])
+					if err != nil {
+						return err
+					}
+					if fromTime.Before(now) && toTime.After(now) {
+						err = d.ActivateDeployment()
+						if err != nil {
+							return err
+						}
+					}
+				}
+				if d.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
+					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationSunFromToUTC[0])
+					if err != nil {
+						return err
+					}
+					toTime, err := time.Parse("15:04", d.Config.NoDeactivationSunFromToUTC[1])
+					if err != nil {
+						return err
+					}
+					if fromTime.Before(now) && toTime.After(now) {
+						err = d.ActivateDeployment()
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
 	}
 	return nil
 }
