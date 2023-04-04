@@ -93,7 +93,8 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 		return err
 	}
 	for range time.Tick(10 * time.Second) {
-		now, err := time.ParseInLocation("15:04", time.Now().UTC().Format("15:04"), loc)
+		now := time.Now().UTC()
+		nowTime, err := time.ParseInLocation("15:04", now.Format("15:04"), loc)
 		if err != nil {
 			return err
 		}
@@ -106,7 +107,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if err != nil {
 				return err
 			}
-			if fromTime.Before(now) && toTime.After(now) {
+			if fromTime.Before(nowTime) && toTime.After(nowTime) {
 				continue
 			}
 		}
@@ -119,7 +120,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if err != nil {
 				return err
 			}
-			if fromTime.Before(now) && toTime.After(now) {
+			if fromTime.Before(nowTime) && toTime.After(nowTime) {
 				continue
 			}
 		}
@@ -132,7 +133,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if err != nil {
 				return err
 			}
-			if fromTime.Before(now) && toTime.After(now) {
+			if fromTime.Before(nowTime) && toTime.After(nowTime) {
 				continue
 			}
 		}
