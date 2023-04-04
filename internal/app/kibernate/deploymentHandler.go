@@ -242,8 +242,7 @@ func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
 							return err
 						}
 					}
-				}
-				if d.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
+				} else if d.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
 					fromTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSatFromToUTC[0], loc)
 					if err != nil {
 						return err
@@ -258,8 +257,7 @@ func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
 							return err
 						}
 					}
-				}
-				if d.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
+				} else if d.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
 					fromTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSunFromToUTC[0], loc)
 					if err != nil {
 						return err

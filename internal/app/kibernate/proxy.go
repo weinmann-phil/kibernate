@@ -110,8 +110,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if fromTime.Before(nowTime) && toTime.After(nowTime) {
 				continue
 			}
-		}
-		if p.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
+		} else if p.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
 			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSatFromToUTC[0], loc)
 			if err != nil {
 				return err
@@ -123,8 +122,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			if fromTime.Before(nowTime) && toTime.After(nowTime) {
 				continue
 			}
-		}
-		if p.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
+		} else if p.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
 			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSunFromToUTC[0], loc)
 			if err != nil {
 				return err
