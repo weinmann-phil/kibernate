@@ -88,14 +88,18 @@ func (p *Proxy) Start() error {
 }
 
 func (p *Proxy) ContinuouslyCheckIdleness() error {
+	loc, err := time.LoadLocation("UTC")
+	if err != nil {
+		return err
+	}
 	for range time.Tick(10 * time.Second) {
 		now := time.Now().UTC()
 		if p.Config.NoDeactivationMoFrFromToUTC != nil && (now.Weekday() == time.Monday || now.Weekday() == time.Tuesday || now.Weekday() == time.Wednesday || now.Weekday() == time.Thursday || now.Weekday() == time.Friday) {
-			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationMoFrFromToUTC[0])
+			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationMoFrFromToUTC[0], loc)
 			if err != nil {
 				return err
 			}
-			toTime, err := time.Parse("15:04", p.Config.NoDeactivationMoFrFromToUTC[1])
+			toTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationMoFrFromToUTC[1], loc)
 			if err != nil {
 				return err
 			}
@@ -104,11 +108,11 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			}
 		}
 		if p.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
-			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationSatFromToUTC[0])
+			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSatFromToUTC[0], loc)
 			if err != nil {
 				return err
 			}
-			toTime, err := time.Parse("15:04", p.Config.NoDeactivationSatFromToUTC[1])
+			toTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSatFromToUTC[1], loc)
 			if err != nil {
 				return err
 			}
@@ -117,11 +121,11 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			}
 		}
 		if p.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
-			fromTime, err := time.Parse("15:04", p.Config.NoDeactivationSunFromToUTC[0])
+			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSunFromToUTC[0], loc)
 			if err != nil {
 				return err
 			}
-			toTime, err := time.Parse("15:04", p.Config.NoDeactivationSunFromToUTC[1])
+			toTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationSunFromToUTC[1], loc)
 			if err != nil {
 				return err
 			}
