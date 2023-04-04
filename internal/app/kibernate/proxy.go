@@ -93,7 +93,10 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 		return err
 	}
 	for range time.Tick(10 * time.Second) {
-		now := time.Now().UTC()
+		now, err := time.ParseInLocation("15:04", time.Now().UTC().Format("15:04"), loc)
+		if err != nil {
+			return err
+		}
 		if p.Config.NoDeactivationMoFrFromToUTC != nil && (now.Weekday() == time.Monday || now.Weekday() == time.Tuesday || now.Weekday() == time.Wednesday || now.Weekday() == time.Thursday || now.Weekday() == time.Friday) {
 			fromTime, err := time.ParseInLocation("15:04", p.Config.NoDeactivationMoFrFromToUTC[0], loc)
 			if err != nil {

@@ -216,15 +216,22 @@ func (d *DeploymentHandler) DeactivateDeployment() error {
 
 func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
 	if d.Config.NoDeactivationAutostart {
+		loc, err := time.LoadLocation("UTC")
+		if err != nil {
+			return err
+		}
 		for range time.Tick(30 * time.Second) {
 			if d.Status == DeploymenStatusDeactivated {
-				now := time.Now().UTC()
+				now, err := time.ParseInLocation("15:04", time.Now().UTC().Format("15:04"), loc)
+				if err != nil {
+					return err
+				}
 				if d.Config.NoDeactivationMoFrFromToUTC != nil && (now.Weekday() == time.Monday || now.Weekday() == time.Tuesday || now.Weekday() == time.Wednesday || now.Weekday() == time.Thursday || now.Weekday() == time.Friday) {
-					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationMoFrFromToUTC[0])
+					fromTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationMoFrFromToUTC[0], loc)
 					if err != nil {
 						return err
 					}
-					toTime, err := time.Parse("15:04", d.Config.NoDeactivationMoFrFromToUTC[1])
+					toTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationMoFrFromToUTC[1], loc)
 					if err != nil {
 						return err
 					}
@@ -236,11 +243,11 @@ func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
 					}
 				}
 				if d.Config.NoDeactivationSatFromToUTC != nil && now.Weekday() == time.Saturday {
-					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationSatFromToUTC[0])
+					fromTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSatFromToUTC[0], loc)
 					if err != nil {
 						return err
 					}
-					toTime, err := time.Parse("15:04", d.Config.NoDeactivationSatFromToUTC[1])
+					toTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSatFromToUTC[1], loc)
 					if err != nil {
 						return err
 					}
@@ -252,11 +259,11 @@ func (d *DeploymentHandler) ContinuouslyHandleNoDeactivationAutostart() error {
 					}
 				}
 				if d.Config.NoDeactivationSunFromToUTC != nil && now.Weekday() == time.Sunday {
-					fromTime, err := time.Parse("15:04", d.Config.NoDeactivationSunFromToUTC[0])
+					fromTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSunFromToUTC[0], loc)
 					if err != nil {
 						return err
 					}
-					toTime, err := time.Parse("15:04", d.Config.NoDeactivationSunFromToUTC[1])
+					toTime, err := time.ParseInLocation("15:04", d.Config.NoDeactivationSunFromToUTC[1], loc)
 					if err != nil {
 						return err
 					}
