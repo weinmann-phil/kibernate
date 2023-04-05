@@ -154,7 +154,6 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 }
 
 func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	var err error
 	p.Deployment.HostHeader = request.Header.Get("Host")
 	if p.Config.UptimeMonitorUserAgentMatch != nil && p.Config.UptimeMonitorUserAgentMatch.MatchString(request.Header.Get("User-Agent")) {
 		if p.Config.UptimeMonitorUserAgentExclude == nil || !p.Config.UptimeMonitorUserAgentExclude.MatchString(request.Header.Get("User-Agent")) {
@@ -164,7 +163,7 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 			} else {
 				writer.Header().Add("Content-Type", "text/plain")
 				writer.WriteHeader(http.StatusOK)
-				_, err = writer.Write([]byte(p.Config.UptimeMonitorResponseMessage))
+				_, err := writer.Write([]byte(p.Config.UptimeMonitorResponseMessage))
 				if err != nil {
 					http.Error(writer, err.Error(), http.StatusInternalServerError)
 				}
@@ -180,7 +179,7 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		p.PatchThrough(writer, request)
 	} else {
 		log.Printf("Deployment %s is not ready, activating", p.Config.Deployment)
-		err = p.Deployment.ActivateDeployment()
+		err := p.Deployment.ActivateDeployment()
 		if err != nil {
 			log.Printf("Error activating deployment: %s", err.Error())
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
