@@ -155,6 +155,7 @@ func (p *Proxy) PatchThrough(writer http.ResponseWriter, request *http.Request) 
 
 func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	var err error
+	p.Deployment.HostHeader = request.Header.Get("Host")
 	if p.Config.UptimeMonitorUserAgentMatch != nil && p.Config.UptimeMonitorUserAgentMatch.MatchString(request.Header.Get("User-Agent")) {
 		if p.Config.UptimeMonitorUserAgentExclude == nil || !p.Config.UptimeMonitorUserAgentExclude.MatchString(request.Header.Get("User-Agent")) {
 			log.Printf("Uptime monitor request received with User-Agent '%s' for path '%s'", request.Header.Get("User-Agent"), request.URL.Path)

@@ -44,6 +44,7 @@ type DeploymentHandler struct {
 	Status           DeploymentStatus
 	LastStatusChange time.Time
 	KubeClientSet    *kubernetes.Clientset
+	HostHeader       string
 }
 
 func NewDeploymentHandler(config Config) (*DeploymentHandler, error) {
@@ -101,7 +102,17 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 			}
 			readinessCheckStartTime := time.Now()
 			for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
-				resp, err := http.Get(targetBaseUrl.String() + d.Config.ReadinessProbePath)
+				httpClient := &http.Client{
+					Timeout: 5 * time.Second,
+				}
+				req, err := http.NewRequest("GET", targetBaseUrl.String()+d.Config.ReadinessProbePath, nil)
+				if err != nil {
+					return err
+				}
+				if d.HostHeader != "" {
+					req.Header.Set("Host", d.HostHeader)
+				}
+				resp, err := httpClient.Do(req)
 				if err == nil && resp.StatusCode == 200 {
 					break
 				}
