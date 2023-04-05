@@ -95,30 +95,6 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 		deployment = dpl
 	}
 	if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
-		if d.Config.ReadinessProbePath != "" {
-			targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", d.Config.Service, d.Config.ServicePort))
-			if err != nil {
-				return err
-			}
-			readinessCheckStartTime := time.Now()
-			for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
-				httpClient := &http.Client{
-					Timeout: 5 * time.Second,
-				}
-				req, err := http.NewRequest("GET", targetBaseUrl.String()+d.Config.ReadinessProbePath, nil)
-				if err != nil {
-					return err
-				}
-				if d.HostHeader != "" {
-					req.Header.Set("Host", d.HostHeader)
-				}
-				resp, err := httpClient.Do(req)
-				if err == nil && resp.StatusCode == 200 {
-					break
-				}
-				time.Sleep(1 * time.Second)
-			}
-		}
 		log.Println("Deployment is ready")
 		d.SetStatus(DeploymentStatusReady)
 	} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {
@@ -178,7 +154,32 @@ func (d *DeploymentHandler) ContinuouslyUpdateStatus() error {
 func (d *DeploymentHandler) WaitForReady() {
 	for range time.Tick(250 * time.Millisecond) {
 		if d.Status == DeploymentStatusReady {
+			break
+		}
+	}
+	if d.Config.ReadinessProbePath != "" {
+		targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", d.Config.Service, d.Config.ServicePort))
+		if err != nil {
+			log.Printf("Readiness Probe: Error parsing target base URL: %s", err.Error())
 			return
+		}
+		readinessCheckStartTime := time.Now()
+		for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
+			httpClient := &http.Client{
+				Timeout: 5 * time.Second,
+			}
+			req, err := http.NewRequest("GET", targetBaseUrl.String()+d.Config.ReadinessProbePath, nil)
+			if err != nil {
+				log.Printf("Readiness Probe: Error creating request: %s", err.Error())
+			}
+			if d.HostHeader != "" {
+				req.Header.Set("Host", d.HostHeader)
+			}
+			resp, err := httpClient.Do(req)
+			if err == nil && resp.StatusCode == 200 {
+				break
+			}
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
