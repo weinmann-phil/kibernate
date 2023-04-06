@@ -172,8 +172,10 @@ func (p *Proxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 		}
 	}
 	if p.IsPathConsideredActivity(request.URL.Path) {
-		log.Printf("Activity detected for path '%s'", request.URL.Path)
-		p.LastActivity = time.Now()
+		if p.IsUserAgentConsideredActivity(request.Header.Get("User-Agent")) {
+			log.Printf("Activity detected for path '%s' with User-Agent '%s'", request.URL.Path, request.Header.Get("User-Agent"))
+			p.LastActivity = time.Now()
+		}
 	}
 	if p.Deployment.Status == DeploymentStatusReady {
 		p.PatchThrough(writer, request)
@@ -218,6 +220,19 @@ func (p *Proxy) IsPathConsideredActivity(path string) bool {
 	if pathMatch != nil && pathMatch.MatchString(path) {
 		isMatching = true
 		if pathExclude != nil && pathExclude.MatchString(path) {
+			isMatching = false
+		}
+	}
+	return isMatching
+}
+
+func (p *Proxy) IsUserAgentConsideredActivity(userAgent string) bool {
+	userAgentMatch := p.Config.ActivityUserAgentMatch
+	userAgentExclude := p.Config.ActivityUserAgentExclude
+	isMatching := false
+	if userAgentMatch != nil && userAgentMatch.MatchString(userAgent) {
+		isMatching = true
+		if userAgentExclude != nil && userAgentExclude.MatchString(userAgent) {
 			isMatching = false
 		}
 	}

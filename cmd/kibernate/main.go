@@ -33,6 +33,8 @@ func main() {
 	defaultWaitType := flag.String("defaultWaitType", "connect", "The type of wait to perform by default - connect, loading, none [default: connect]")
 	activityPathMatch := flag.String("activityPathMatch", ".*", "A regular expression to match paths that should be considered activity [default: \".*\"]")
 	activityPathExclude := flag.String("activityPathExclude", "", "A regular expression to exclude paths that should not be considered activity")
+	activityUserAgentMatch := flag.String("activityUserAgentMatch", ".*", "A regular expression to match User-Agent headers that should be considered activity [default: \".*\"]")
+	activityUserAgentExclude := flag.String("activityUserAgentExclude", "", "A regular expression to exclude User-Agent headers that should not be considered activity")
 	waitNonePathMatch := flag.String("waitNonePathMatch", "", "A regular expression to match paths that should not wait for deployment readiness")
 	waitNonePathExclude := flag.String("waitNonePathExclude", "", "A regular expression to exclude paths that should not wait for deployment readiness")
 	waitConnectPathMatch := flag.String("waitConnectPathMatch", "", "A regular expression to match paths that should wait for deployment readiness")
@@ -75,6 +77,12 @@ func main() {
 	}
 	if *activityPathExclude != "" {
 		kibernateConfig.ActivityPathExclude = regexp.MustCompile(*activityPathExclude)
+	}
+	if *activityUserAgentMatch != "" {
+		kibernateConfig.ActivityUserAgentMatch = regexp.MustCompile(*activityUserAgentMatch)
+	}
+	if *activityUserAgentExclude != "" {
+		kibernateConfig.ActivityUserAgentExclude = regexp.MustCompile(*activityUserAgentExclude)
 	}
 	if *waitNonePathMatch != "" {
 		kibernateConfig.WaitNonePathMatch = regexp.MustCompile(*waitNonePathMatch)

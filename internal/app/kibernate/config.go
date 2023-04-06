@@ -38,6 +38,8 @@ type Config struct {
 	DefaultWaitType               WaitType
 	ActivityPathMatch             *regexp.Regexp
 	ActivityPathExclude           *regexp.Regexp
+	ActivityUserAgentMatch        *regexp.Regexp
+	ActivityUserAgentExclude      *regexp.Regexp
 	WaitNonePathMatch             *regexp.Regexp
 	WaitNonePathExclude           *regexp.Regexp
 	WaitConnectPathMatch          *regexp.Regexp
