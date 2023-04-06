@@ -136,7 +136,7 @@ func (p *Proxy) ContinuouslyCheckIdleness() error {
 			}
 		}
 		if time.Since(p.LastActivity).Seconds() > float64(p.Config.IdleTimeoutSecs) && p.Deployment.Status == DeploymentStatusReady && time.Since(p.Deployment.LastStatusChange).Seconds() > float64(p.Config.IdleTimeoutSecs) {
-			log.Printf("Deployment %s has been idle for %d seconds, deactivating", p.Config.Deployment, uint16(time.Since(p.LastActivity).Seconds()))
+			log.Printf("Deployment %s has been idle for %f seconds, deactivating", p.Config.Deployment, time.Since(p.LastActivity).Seconds())
 			err := p.Deployment.DeactivateDeployment()
 			if err != nil {
 				log.Printf("Error deactivating deployment: %s", err.Error())
