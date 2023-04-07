@@ -33,10 +33,11 @@ import (
 type DeploymentStatus string
 
 const (
-	DeploymentStatusReady        DeploymentStatus = "ready"
-	DeploymentStatusActivating                    = "activating"
-	DeploymentStatusDeactivating                  = "deactivating"
-	DeploymenStatusDeactivated                    = "deactivated"
+	DeploymentStatusReady         DeploymentStatus = "ready"
+	DeploymentStatusPossiblyReady                  = "possiblyReady"
+	DeploymentStatusActivating                     = "activating"
+	DeploymentStatusDeactivating                   = "deactivating"
+	DeploymenStatusDeactivated                     = "deactivated"
 )
 
 type DeploymentHandler struct {
@@ -95,8 +96,39 @@ func (d *DeploymentHandler) UpdateStatus(dpl *appsv1.Deployment) error {
 		deployment = dpl
 	}
 	if deployment.Status.ReadyReplicas > 0 && *deployment.Spec.Replicas > 0 {
-		log.Println("Deployment is ready")
-		d.SetStatus(DeploymentStatusReady)
+		if d.Config.ReadinessProbePath != "" && d.Status != DeploymentStatusPossiblyReady && d.Status != DeploymentStatusReady {
+			log.Println("Deployment is possibly ready")
+			d.SetStatus(DeploymentStatusPossiblyReady)
+			go func() {
+				targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", d.Config.Service, d.Config.ServicePort))
+				if err != nil {
+					log.Printf("Readiness Probe: Error parsing target base URL: %s", err.Error())
+					return
+				}
+				readinessCheckStartTime := time.Now()
+				for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
+					httpClient := &http.Client{
+						Timeout: 5 * time.Second,
+					}
+					req, err := http.NewRequest("GET", targetBaseUrl.String()+d.Config.ReadinessProbePath, nil)
+					if err != nil {
+						log.Printf("Readiness Probe: Error creating request: %s", err.Error())
+					}
+					if d.HostHeader != "" {
+						req.Header.Set("Host", d.HostHeader)
+					}
+					resp, err := httpClient.Do(req)
+					if err == nil && resp.StatusCode == 200 {
+						break
+					}
+					time.Sleep(1 * time.Second)
+				}
+				d.SetStatus(DeploymentStatusReady)
+			}()
+		} else {
+			log.Println("Deployment is ready")
+			d.SetStatus(DeploymentStatusReady)
+		}
 	} else if deployment.Status.Replicas > 0 && *deployment.Spec.Replicas == 0 {
 		log.Println("Deployment is deactivating")
 		d.SetStatus(DeploymentStatusDeactivating)
@@ -155,31 +187,6 @@ func (d *DeploymentHandler) WaitForReady() {
 	for range time.Tick(250 * time.Millisecond) {
 		if d.Status == DeploymentStatusReady {
 			break
-		}
-	}
-	if d.Config.ReadinessProbePath != "" {
-		targetBaseUrl, err := url.Parse(fmt.Sprintf("http://%s:%d", d.Config.Service, d.Config.ServicePort))
-		if err != nil {
-			log.Printf("Readiness Probe: Error parsing target base URL: %s", err.Error())
-			return
-		}
-		readinessCheckStartTime := time.Now()
-		for d.Config.ReadinessTimeoutSecs == 0 || time.Since(readinessCheckStartTime).Seconds() < float64(d.Config.ReadinessTimeoutSecs) {
-			httpClient := &http.Client{
-				Timeout: 5 * time.Second,
-			}
-			req, err := http.NewRequest("GET", targetBaseUrl.String()+d.Config.ReadinessProbePath, nil)
-			if err != nil {
-				log.Printf("Readiness Probe: Error creating request: %s", err.Error())
-			}
-			if d.HostHeader != "" {
-				req.Header.Set("Host", d.HostHeader)
-			}
-			resp, err := httpClient.Do(req)
-			if err == nil && resp.StatusCode == 200 {
-				break
-			}
-			time.Sleep(1 * time.Second)
 		}
 	}
 }
